@@ -15,7 +15,7 @@
       ios_config:
         backup: yes
         backup_options:
-          filename: "{{ inventory_hostname }}-backup.cfg"
+          filename: "{{ inventory_hostname }}.txt"
 
 
 - name: "PLAY 2: Setup R2"

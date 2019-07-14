@@ -1,0 +1,106 @@
+---
+# yamllint disable rule:truthy
+# yamllint disable rule:line-length
+#
+# This playbook is setting up the framework for R2 and R4 within the lab
+# environment. I look to keep it setup simple for everyone. Demonstration will
+# be on just R3 from a blog post. Likely to show this in the video.
+- name: "PLAY 1: Get Configuration Backup to verify connectivity"
+  hosts: ios_devices
+  become: yes
+  become_method: enable
+  tags: all
+  tasks:
+    - name: "TASK 1: Verify Config Backup"
+      ios_config:
+        backup: yes
+        backup_options:
+          filename: "{{ inventory_hostname }}-backup.cfg"
+
+
+- name: "PLAY 2: Setup R2"
+  hosts: r2
+  become: yes
+  become_method: enable
+  tags: router_setup
+  tasks:
+    - name: "TASK 1: Setup eBGP Peers"
+      ios_bgp:
+        config:
+          bgp_as: 65510
+          router_id: 10.0.0.2
+          log_neighbor_changes: true
+          neighbors:
+            - neighbor: 192.0.2.2
+              remote_as: 65500
+              timers:
+                keepalive: 15
+                holdtime: 45
+                min_neighbor_holdtime: 5
+              description: R3
+            - neighbor: 192.0.2.6
+              remote_as: 65500
+              timers:
+                keepalive: 15
+                holdtime: 45
+                min_neighbor_holdtime: 5
+              description: R4 conenction
+          networks:
+            - prefix: 0.0.0.0
+              masklen: 0
+          address_family:
+            - afi: ipv4
+              safi: unicast
+              redistribute:
+                - protocol: ospf
+                  id: "1"
+                  metric: 10
+        operation: merge
+
+- name: "PLAY 3: Setup R4"
+  hosts: r4
+  become: yes
+  become_method: enable
+  tags: router_setup
+  tasks:
+    - name: "TASK 1: Setup BGP Peers"
+      ios_bgp:
+        config:
+          bgp_as: 65500
+          router_id: 10.0.0.4
+          log_neighbor_changes: true
+          neighbors:
+            - neighbor: 192.0.2.5
+              remote_as: 65510
+              timers:
+                keepalive: 15
+                holdtime: 45
+                min_neighbor_holdtime: 5
+              description: R2 Uplink
+            - neighbor: 198.51.100.1
+              remote_as: 65500
+              timers:
+                keepalive: 15
+                holdtime: 45
+                min_neighbor_holdtime: 5
+              description: R3 conenction
+          networks:
+            - prefix: 0.0.0.0
+              masklen: 0
+          address_family:
+            - afi: ipv4
+              safi: unicast
+              redistribute:
+                - protocol: eigrp
+                  id: "20"
+                  metric: 10
+              neighbors:
+                - neighbor: 198.51.100.1
+                  activate: yes
+                  next_hop_self: yes
+        operation: merge
+      register: output
+
+    - name: Debug output
+      debug:
+        msg: "{{ output }}"

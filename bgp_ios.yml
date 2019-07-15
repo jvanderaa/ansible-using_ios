@@ -1,0 +1,44 @@
+---
+# yamllint disable rule:truthy
+# yamllint disable rule:line-length
+- name: "PLAY 1: Setup iBGP Peer to R4"
+  connection: network_cli
+  hosts: r3
+  become: yes
+  become_method: enable
+  tasks:
+    - name: "TASK 1: Setup iBGP Peer"
+      ios_bgp:
+        config:
+          bgp_as: 65500
+          router_id: 10.0.0.3
+          log_neighbor_changes: true
+          neighbors:
+            - neighbor: 198.51.100.2
+              remote_as: 65500
+              timers:
+                keepalive: 15
+                holdtime: 45
+                min_neighbor_holdtime: 5
+              description: R4
+          networks:
+            - prefix: 198.51.100.0
+              masklen: 24
+            - prefix: 203.0.113.0
+              masklen: 25
+          address_family:
+            - afi: ipv4
+              safi: unicast
+              auto_summary: no
+              neighbors:
+                - neighbor: 198.51.100.2
+                  activate: yes
+                  next_hop_self: yes
+        operation: merge
+      register: ibgp_peer1
+
+    - name: "SUMMARY TASK: Debug output"
+      debug:
+        msg:
+          - "{{ ibgp_peer1 }}"
+...

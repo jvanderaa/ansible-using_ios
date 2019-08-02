@@ -1,0 +1,128 @@
+---
+# Ansible playbook to copy and change the boot statement on a Cisco IOS switch
+# Leverages NTC-Ansible: https://github.com/networktocode/ntc-ansible
+# Requires Python PyNTC
+- name: Copy code to machine and change boot statement
+  connection: local
+  hosts: remote_switches
+  gather_facts: no
+  serial:
+    - 5%
+    - 10%
+    - 30%
+  vars_files:
+    - /home/joshv/.creds/my_net.yml
+  vars:
+    cli:
+      username: "{{ ansible_user }}"
+      password: "{{ ansible_password }}"
+      host: "{{ inventory_hostname | lower }}"
+      timeout: 200
+    teams_address: "randomstring.example.onmicrosoft.com@amer.teams.ms"
+    from_email: "NetworkGroup@example.com"
+    smtp_host: "smtpmail.example.com"
+
+    code_version:
+      WS-C3560CX-8PC-S: c3560cx-universalk9-mz.152-4.E4.bin
+      WS-C3560C-8PC-S: c3560c405-universalk9-mz.152-2.E7.bin
+      WS-C3560CG-8PC-S: c3560c405-universalk9-mz.152-2.E7.bin
+      WS-C3560C-12PC-S: c3560c405-universalk9-mz.152-2.E7.bin
+      WS-C2960X-24TS-L: c2960x-universalk9-mz.152-2.E7.bin
+
+    old_versions:
+      - c3560c405-universalk9-mz.152-2.E1.bin
+      - c3560c405ex-universalk9-mz.152-2.E1.bin
+      - c3560c405-universalk9-mz.150-2.SE5
+
+  tasks:
+    - name: "TASK 1: Mail >> Send start notification to Teams"
+      mail:
+        host: "{{ smtp_host }}"
+        port: 25
+        from: "{{ from_email }}"
+        to: "{{ teams_address }}"
+        subject: Ansible Report
+        body: '{{ inventory_hostname }} is starting the file copy for code upgrade.'
+
+    - name: "TASK 2: Delete Old Versions of IOS "
+      ios_command:
+        provider: "{{ cli }}"
+        commands:
+          - delete /force flash:/{{ item }}
+      with_items: "{{ old_versions }}"
+
+    - name: "TASK 3: NTC Show >> Determine OS Version"
+      ntc_show_command:
+        connection: ssh
+        platform: cisco_ios_ssh
+        command: show version
+        template_dir: "/etc/ansible/library/ntc-ansible/ntc-templates/templates"
+        host: "{{ inventory_hostname }}"
+        username: "{{ ansible_user }}"
+        password: "{{ ansible_password }}"
+        secret: "{{ ansible_password }}"
+      register: ntc_result
+
+    - name: Debug NTC result
+      debug:
+        msg: "{{ ntc_result }}"
+
+    - name: "TASK 4: IOS >> Verify SCP is configured"
+      ios_config:
+        provider: "{{ cli }}"
+        lines:
+          - ip scp server enable
+
+    - name: "TASK 5: SYS >> Set Fact for image name - Multiple uses"
+      set_fact:
+        new_image: "{{ code_version[ntc_result['response'][0]['hardware'][0]] }}"
+
+    - name: "TASK 6: NTC >> Copy File"
+      ntc_file_copy:
+        local_file: images/{{ new_image }}
+        platform: cisco_ios_ssh
+        username: "{{ ansible_user }}"
+        password: "{{ ansible_password }}"
+        host: "{{ inventory_hostname }}"
+      register: file_copy
+
+    - name: Debug of file_copy
+      debug:
+        msg: "{{ file_copy }}"
+
+    - name: "TASK 7A: Mail >> Send file copy status"
+      mail:
+        host: "{{ smtp_host }}"
+        port: 25
+        from: "{{ from_email }}"
+        to: "{{ teams_address }}"
+        subject: Ansible Report
+        body: 'File copy success for {{ inventory_hostname }}'
+      when: file_copy.failed == False
+
+    - name: "TASK 7B: Mail >> Send file copy status - Failed"
+      mail:
+        host: "{{ smtp_host }}"
+        port: 25
+        from: "{{ from_email }}"
+        to: "{{ teams_address }}"
+        subject: Ansible Report
+        body: 'File copy failed for {{ inventory_hostname }}'
+      when: file_copy.failed == True
+
+    - name: "TASK 8: IOS >> Change boot statement"
+      ios_config:
+        provider: "{{ cli }}"
+        lines:
+          - boot-start-marker
+          - boot system flash:/{{ new_image }}
+          - boot-end-marker
+        replace: block
+
+    - name: "TASK 9: NTC >> Save configuration"
+      ntc_save_config:
+        platform: cisco_ios_ssh
+        host: "{{ inventory_hostname }}"
+        username: "{{ ansible_user }}"
+        password: "{{ ansible_password }}"
+        local_file: backup/{{ inventory_hostname }}_backup.cfg

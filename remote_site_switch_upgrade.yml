@@ -2,6 +2,8 @@
 # Ansible playbook to copy and change the boot statement on a Cisco IOS switch
 # Leverages NTC-Ansible: https://github.com/networktocode/ntc-ansible
 # Requires Python PyNTC
+# yamllint disable rule:truthy
+# yamllint disable rule:line-length
 - name: Copy code to machine and change boot statement
   connection: local
   hosts: remote_switches

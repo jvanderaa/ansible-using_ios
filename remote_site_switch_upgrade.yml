@@ -10,16 +10,17 @@
     - 5%
     - 10%
     - 30%
-  vars_files:
-    - /home/joshv/.creds/my_net.yml
   vars:
     cli:
       username: "{{ ansible_user }}"
       password: "{{ ansible_password }}"
       host: "{{ inventory_hostname | lower }}"
       timeout: 200
+
+    # These are for using email as a mechanism to post to MS Teams. Keep an eye
+    # out if an API becomes more available.
     teams_address: "randomstring.example.onmicrosoft.com@amer.teams.ms"
-    from_email: "NetworkGroup@example.com"
+    from_email: "netteam@example.com"
     smtp_host: "smtpmail.example.com"
 
     code_version:

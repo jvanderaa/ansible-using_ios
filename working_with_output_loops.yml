@@ -1,0 +1,30 @@
+---
+# yamllint disable rule:truthy
+- name: Test command outputs
+  connection: network_cli
+  hosts: cisco_routers
+  gather_facts: no
+  become: yes
+  become_method: enable
+
+  tasks:
+    - name: "TASK 1: IOS >> Show commands"
+      ios_command:
+        commands:
+          - show run interface loopback 0
+          - ping 8.8.8.8 source loopback 0 repeat 20 size 1500
+          - ping 1.1.1.1 source loopback 0 repeat 20 size 1500
+      register: show_commands
+
+    - name: "TASK 2: Show all of the output"
+      debug:
+        msg: "{{ show_commands }}"
+
+    - name: "TASK 3: Pause for showing"
+      pause:
+        minutes: 3
+
+    - name: "TASK 2: SYS >> DEBUG to see loop"
+      debug:
+        msg: "{{ item }}"
+      with_items: "{{ show_commands['stdout'] }}"

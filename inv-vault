@@ -1,0 +1,7 @@
+[all]
+
+[cisco_routers]
+r1 ansible_host=10.0.0.11
+
+[cisco_routers:vars]
+ansible_network_os=ios

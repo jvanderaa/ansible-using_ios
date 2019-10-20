@@ -1,0 +1,23 @@
+---
+- name: "PLAY 1: Using cli_command for a single command"
+  hosts: r1
+  connection: network_cli
+  tasks:
+    - name: "TASK 1: Get NTP Associations"
+      cli_command:
+        command: "show ntp associations"
+      register: command_output
+
+    - name: "TASK 2: Show clock"
+      cli_command:
+        command: "show clock"
+      register: clock_output
+
+    - name: "TASK 3: Debug ntp"
+      debug:
+        msg: "{{ command_output }}"
+
+    - name: "TASK 4: Debug clock"
+      debug:
+        msg: "{{ clock_output }}"
+...

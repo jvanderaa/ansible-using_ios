@@ -1,0 +1,16 @@
+---
+- name: "PLAY 1: Using ios_command for a single command"
+  hosts: r1
+  connection: network_cli
+  tasks:
+    - name: "TASK 1: Get NTP Associations"
+      ios_command:
+        commands:
+          - show ntp associations
+          - show clock
+      register: command_output
+
+    - name: "TASK 2: Debug output"
+      debug:
+        msg: "{{ command_output }}"
+...

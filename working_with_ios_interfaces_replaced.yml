@@ -1,0 +1,23 @@
+---
+# Playbook to compare ios_interface to ios_interfaces
+# yamllint disable rule:truthy
+- name: Test command outputs
+  connection: network_cli
+  hosts: cisco_routers
+  gather_facts: no
+  become: yes
+  become_method: enable
+
+  tasks:
+    - name: "TASK 1: IOS >> Set some interfaces with merge"
+      ios_interfaces:
+        state: replaced
+        config:
+          - name: GigabitEthernet0/3
+            enabled: yes
+            description: "Configured by Ansible"
+      register: ios_interface_output
+
+    - name: "TASK 2: SYS >> DEBUG OUTPUT"
+      debug:
+        msg: "{{ ios_interface_output }}"

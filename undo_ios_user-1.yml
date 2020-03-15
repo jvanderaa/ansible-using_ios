@@ -1,0 +1,19 @@
+---
+- name: "PLAY 1: WORKING WITH IOS USER MODULE"
+  hosts: cisco_routers
+  connection: network_cli
+  tasks:
+    - name: "TASK 1: Remove local username with SSH Key"
+      ios_user:
+        name: joshv
+        nopassword: True
+        sshkey: "{{ lookup('file', '~/.ssh/id_rsa.pub') }}"
+        state: absent
+      register: config_output
+
+    - debug:
+        msg: "{{ config_output }}"
+
+    - name: "FINAL TASK: Save Config"
+      ios_config:
+        save_when: always

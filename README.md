@@ -1,4 +1,4 @@
-[![Build Status](https://travis-ci.org/jvanderaa/ansible-using_ios.svg?branch=master)](https://travis-ci.org/jvanderaa/ansible-using_ios)  
+[![Build Status](https://github.com/jvanderaa/ansible-using_ios/workflows/CI/badge.svg)  
 
 # ansbile-using_ios
 

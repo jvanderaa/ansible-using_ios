@@ -45,7 +45,7 @@
         from: "{{ from_email }}"
         to: "{{ teams_address }}"
         subject: Ansible Report
-        body: '{{ inventory_hostname }} is starting the file copy for code upgrade.'
+        body: "{{ inventory_hostname }} is starting the file copy for code upgrade."
 
     - name: "TASK 2: Delete Old Versions of IOS "
       ios_command:
@@ -100,7 +100,7 @@
         from: "{{ from_email }}"
         to: "{{ teams_address }}"
         subject: Ansible Report
-        body: 'File copy success for {{ inventory_hostname }}'
+        body: "File copy success for {{ inventory_hostname }}"
       when: file_copy.failed == False
 
     - name: "TASK 7B: Mail >> Send file copy status - Failed"
@@ -110,7 +110,7 @@
         from: "{{ from_email }}"
         to: "{{ teams_address }}"
         subject: Ansible Report
-        body: 'File copy failed for {{ inventory_hostname }}'
+        body: "File copy failed for {{ inventory_hostname }}"
       when: file_copy.failed == True
 
     - name: "TASK 8: IOS >> Change boot statement"

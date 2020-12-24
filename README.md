@@ -1,4 +1,4 @@
-[![Build Status](https://github.com/jvanderaa/ansible-using_ios/workflows/CI/badge.svg)  
+![Build Status](https://github.com/jvanderaa/ansible-using_ios/workflows/CI/badge.svg)  
 
 # ansbile-using_ios
 
